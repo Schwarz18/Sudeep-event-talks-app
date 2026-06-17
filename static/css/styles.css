@@ -887,3 +887,10 @@ body {
         bottom: 1rem;
     }
 }
+
+/* Copy success button animation */
+.copy-card-btn.copy-success {
+    border-color: var(--accent-feature) !important;
+    color: var(--accent-feature) !important;
+    box-shadow: 0 0 10px var(--accent-feature-glow) !important;
+}

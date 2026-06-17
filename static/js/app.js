@@ -1,5 +1,6 @@
 // Application State
 let releaseNotes = [];
+let filteredNotes = []; // Stores the currently filtered list for export
 let activeTypeFilter = 'all';
 let searchQuery = '';
 
@@ -9,6 +10,7 @@ const searchInput = document.getElementById('searchInput');
 const clearSearchBtn = document.getElementById('clearSearch');
 const refreshBtn = document.getElementById('refreshBtn');
 const refreshIcon = document.getElementById('refreshIcon');
+const exportCsvBtn = document.getElementById('exportCsvBtn'); // Added
 const resultsCount = document.getElementById('resultsCount');
 const loadingState = document.getElementById('loadingState');
 const errorState = document.getElementById('errorState');
@@ -37,9 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Refresh buttons
+    // Refresh and Export buttons
     refreshBtn.addEventListener('click', () => fetchReleaseNotes(true));
     retryBtn.addEventListener('click', () => fetchReleaseNotes(true));
+    exportCsvBtn.addEventListener('click', exportFilteredNotesToCSV);
     
     // Search input
     searchInput.addEventListener('input', (e) => {
@@ -191,6 +194,9 @@ function filterAndRender() {
         return typeMatch && searchMatch;
     });
     
+    // Save to global state for export
+    filteredNotes = filtered;
+    
     // Update stats label
     resultsCount.textContent = `${filtered.length} of ${releaseNotes.length} updates`;
     
@@ -249,6 +255,9 @@ function createCardElement(item, index) {
             <button class="btn btn-outline read-more-btn">
                 <i class="fa-solid fa-book-open"></i> Details
             </button>
+            <button class="btn btn-outline copy-card-btn" title="Copy plain text to clipboard">
+                <i class="fa-solid fa-copy"></i>
+            </button>
             <button class="btn btn-tweet share-card-btn">
                 <i class="fa-brands fa-x-twitter"></i> Tweet
             </button>
@@ -259,6 +268,12 @@ function createCardElement(item, index) {
     card.querySelector('.read-more-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         openModal(item);
+    });
+    
+    card.querySelector('.copy-card-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const plainText = stripHtmlTags(item.body).trim();
+        copyToClipboard(plainText, e.currentTarget);
     });
     
     card.querySelector('.share-card-btn').addEventListener('click', (e) => {
@@ -349,3 +364,82 @@ styleSheet.innerText = `
 }
 `;
 document.head.appendChild(styleSheet);
+
+// Copy plain text body to clipboard
+function copyToClipboard(text, buttonElement) {
+    if (!navigator.clipboard) {
+        // Fallback for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Copied text to clipboard!', 'success');
+            triggerCopySuccessUI(buttonElement);
+        } catch (err) {
+            showToast('Failed to copy text.', 'error');
+        }
+        document.body.removeChild(textArea);
+        return;
+    }
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied text to clipboard!', 'success');
+        triggerCopySuccessUI(buttonElement);
+    }).catch(err => {
+        showToast('Failed to copy text.', 'error');
+    });
+}
+
+function triggerCopySuccessUI(button) {
+    const icon = button.querySelector('i');
+    icon.className = 'fa-solid fa-check';
+    button.classList.add('copy-success');
+    
+    setTimeout(() => {
+        icon.className = 'fa-solid fa-copy';
+        button.classList.remove('copy-success');
+    }, 1500);
+}
+
+// Export Filtered Release Notes to CSV
+function exportFilteredNotesToCSV() {
+    if (filteredNotes.length === 0) {
+        showToast('No updates available to export.', 'error');
+        return;
+    }
+    
+    const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '';
+        let str = String(val);
+        str = str.replace(/"/g, '""');
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+            str = `"${str}"`;
+        }
+        return str;
+    };
+    
+    let csvContent = "Date,Type,Description,Source Link\r\n";
+    
+    filteredNotes.forEach(item => {
+        const cleanBody = stripHtmlTags(item.body).trim();
+        csvContent += `${escapeCSV(item.date)},${escapeCSV(item.type)},${escapeCSV(cleanBody)},${escapeCSV(item.link)}\r\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.setAttribute("download", `bigquery_release_notes_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`Exported ${filteredNotes.length} updates to CSV.`, 'success');
+}
