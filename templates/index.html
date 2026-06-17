@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Hub</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans for UI, JetBrains Mono for code snippets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Link to Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- FontAwesome for high-quality iconography -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="stars-bg"></div>
+    <div class="glowing-orb orb-1"></div>
+    <div class="glowing-orb orb-2"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-database"></i>
+                    <div class="logo-pulse"></div>
+                </div>
+                <div>
+                    <h1>BigQuery</h1>
+                    <p class="subtitle">Release Notes Dashboard</p>
+                </div>
+            </div>
+            
+            <div class="actions-area">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search updates...">
+                    <button id="clearSearch" class="clear-btn" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <button id="refreshBtn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i class="fa-solid fa-rotate" id="refreshIcon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters Toolbar -->
+        <section class="filters-bar">
+            <div class="filter-group" id="typeFilters">
+                <button class="filter-chip active" data-type="all">All Updates</button>
+                <button class="filter-chip" data-type="Feature">Features</button>
+                <button class="filter-chip" data-type="Issue">Issues</button>
+                <button class="filter-chip" data-type="Announcement">Announcements</button>
+                <button class="filter-chip" data-type="Changed">Changes</button>
+                <button class="filter-chip" data-type="Deprecation">Deprecations</button>
+            </div>
+            <div class="stats-label" id="resultsCount">Loading...</div>
+        </section>
+
+        <!-- Main Feed Grid -->
+        <main class="feed-grid" id="feedGrid">
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="spinner-container">
+                    <div class="double-bounce1"></div>
+                    <div class="double-bounce2"></div>
+                </div>
+                <p>Retrieving Google Cloud Release Notes...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-state" id="errorState" style="display: none;">
+                <div class="error-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3>Fetch Failed</h3>
+                <p id="errorMessage">Unable to connect to the feed service. Please try again later.</p>
+                <button id="retryBtn" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrows-rotate"></i> Retry Connection
+                </button>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <h3>No Updates Found</h3>
+                <p>No release notes match your search query or selected type.</p>
+                <button id="resetFiltersBtn" class="btn btn-outline">Clear Filters</button>
+            </div>
+
+            <!-- Dynamic content inserted here -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Data fetched directly from <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener">Google Cloud BigQuery RSS Feed</a>.</p>
+            <p>&copy; 2026 Release Hub. Built with Flask &amp; Vanilla Web Technologies.</p>
+        </footer>
+    </div>
+
+    <!-- Modal for Detailed View -->
+    <div class="modal-overlay" id="detailModal" style="display: none;">
+        <div class="modal-card">
+            <button class="modal-close" id="modalClose">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+                <span class="badge" id="modalBadge">Feature</span>
+                <span class="modal-date" id="modalDate">June 16, 2026</span>
+            </div>
+            <h2 class="modal-title" id="modalTitle">Update Details</h2>
+            <div class="modal-body-content" id="modalBody">
+                <!-- Content injected here -->
+            </div>
+            <div class="modal-footer">
+                <a href="#" target="_blank" id="modalSourceLink" class="btn btn-outline">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Source Docs
+                </a>
+                <button id="modalTweetBtn" class="btn btn-tweet">
+                    <i class="fa-brands fa-x-twitter"></i> Tweet Update
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Link to JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
